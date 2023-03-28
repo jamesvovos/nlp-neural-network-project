@@ -1,7 +1,7 @@
 # NLP Neural Network Research Project.
 ## _Implementation using PyTorch and spaCy._
 
-
+Inspired by: https://www.youtube.com/watch?v=RpWeNzfSUHw&list=LL&index=37
 
 ## Installation Guide
 PyTorch installation instructions [PyTorch website](https://pytorch.org/)
@@ -9,6 +9,7 @@ spaCy installation instructions [spaCy website](https://spacy.io/)
 
 ## 1. Install PyTorch
 ![PyTorchImage](https://imageio.forbes.com/specials-images/imageserve/60d815da0c030140b46c2abd/PyTorch-Facebook/960x0.jpg?format=jpg&width=960)
+
 Install `PyTorch`
 ```sh
 $pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
