@@ -1,6 +1,10 @@
 import spacy
 from processor import DataProcessor
 from chat import ChatBot
+import torch
+
+FILE = "data.pth"
+trainingData = torch.load(FILE)
 
 nlp = spacy.load('en_core_web_md')
 
@@ -14,5 +18,15 @@ data = DataProcessor(training_required)
 data_processor = data.initialise_data()
 
 # setup chatbot interface
-chatbot = ChatBot(data_processor)
-chatbot.create_chat()
+chatbot = ChatBot(data_processor, trainingData)
+
+
+print("Let's chat! (type 'quit' to exit)")
+while True:
+    # sentence = "do you use credit cards?"
+    sentence = input("You: ")
+    if sentence == "quit":
+        break
+
+    resp = chatbot.get_response(sentence)
+    print(resp)

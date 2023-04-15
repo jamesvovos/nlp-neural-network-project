@@ -11,57 +11,49 @@ nlp = spacy.load('en_core_web_md')
 
 
 class ChatBot(object):
-    def __init__(self, dp):
+    def __init__(self, dp, data):
         # NOTE: passing data processor object to perform tokenization/bag of words functions
         self.dp = dp
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        self.response = requests.get("http://127.0.0.1:8000/intents/")
+        self.intents = json.loads(self.response.text)
         self.bot_name = "James's AI"
+        self.input_size = data["input_size"]
+        self.hidden_size = data["hidden_size"]
+        self.output_size = data["output_size"]
+        self.tokenized_words = data["tokenized_words"]
+        self.tags = data["tags"]
+        self.model_state = data["model_state"]
 
-    # function to setup chat bot
-    def create_chat(self):
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # function to get response from chatbot
+    def get_response(self, msg):
 
-        response = requests.get("http://127.0.0.1:8000/intents/")
-        intents = json.loads(response.text)
-
-        FILE = "data.pth"
-        data = torch.load(FILE)
-
-        input_size = data["input_size"]
-        hidden_size = data["hidden_size"]
-        output_size = data["output_size"]
-        tokenized_words = data["tokenized_words"]
-        tags = data["tags"]
-        model_state = data["model_state"]
-
-        model = NeuralNet(input_size, hidden_size, output_size).to(device)
-        model.load_state_dict(model_state)
+        model = NeuralNet(self.input_size, self.hidden_size,
+                          self.output_size).to(self.device)
+        model.load_state_dict(self.model_state)
         model.eval()
 
-        print("Let's chat! (type 'quit' to exit)")
-        while True:
-            # sentence = "do you use credit cards?"
-            sentence = input("You: ")
-            self.dp.chatbot_text = nlp(sentence)
-            if sentence == "quit":
-                break
+        # sentence = "do you use credit cards?"
+        sentence = msg
+        self.dp.chatbot_text = nlp(sentence)
 
-            sentence = self.dp.tokenize(sentence)
-            x = self.dp.bag_of_words(sentence, tokenized_words)
-            x = x.reshape(1, x.shape[0])
-            x = torch.from_numpy(x).to(device)
+        sentence = self.dp.tokenize(sentence)
+        x = self.dp.bag_of_words(sentence, self.tokenized_words)
+        x = x.reshape(1, x.shape[0])
+        x = torch.from_numpy(x).to(self.device)
 
-            output = model(x)
-            _, predicted = torch.max(output, dim=1)
+        output = model(x)
+        _, predicted = torch.max(output, dim=1)
 
-            tag = tags[predicted.item()]
+        tag = self.tags[predicted.item()]
 
-            # check probabilities using softmax
-            probs = torch.softmax(output, dim=1)
-            prob = probs[0][predicted.item()]
-            if prob.item() > 0.75:
-                for intent in intents:
-                    if tag == intent["tag"]:
-                        print(
-                            f"{self.bot_name}: {random.choice(intent['responses'])['text']}")
-            else:
-                print(f"{self.bot_name}: I do not understand...")
+        # check probabilities using softmax
+        probs = torch.softmax(output, dim=1)
+        prob = probs[0][predicted.item()]
+        if prob.item() > 0.75:
+            for intent in self.intents:
+                if tag == intent["tag"]:
+                    return random.choice(intent['responses'])['text']
+        else:
+            return "I do not understand..."
