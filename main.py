@@ -1,25 +1,15 @@
 import spacy
-from processor import DataProcessor
 from chat import ChatBot
-import torch
-
-FILE = "data.pth"
-trainingData = torch.load(FILE)
 
 nlp = spacy.load('en_core_web_md')
 
-# NOTE: toggle if you want to retrain the model
-training_required: bool = False
-
-# create NLP model object and pass it the text from file
-data = DataProcessor(training_required)
-
-# perform NLP pipeline process and return the updated data processor object
-data_processor = data.initialise_data()
+# NOTE: toggle to true you want to retrain the model
+training_required: bool = True
+npc_id: int = 1
 
 # setup chatbot interface
-chatbot = ChatBot(data_processor, trainingData)
-
+chatbot = ChatBot(training_required, npc_id)
+chatbot.setup()
 
 print("Let's chat! (type 'quit' to exit)")
 while True:

@@ -76,8 +76,9 @@ class DataProcessor(object):
         displacy.serve(doc, style="ent")
 
     # get JSON file training data and create the NLP pipeline
-    def initialise_data(self):
-        response = requests.get("http://127.0.0.1:8000/intents/")
+    def initialise_data(self, npc_id: int):
+        response = requests.get(
+            "http://127.0.0.1:8000/npcs/intents/" + str(npc_id))
         intents = json.loads(response.text)
 
         # Convert list of dictionaries to JSON string
@@ -91,9 +92,8 @@ class DataProcessor(object):
 
         # data we want to extract
         tags = df['tag'].tolist()
-        patterns = [pattern['text'] for p in df['patterns'] for pattern in p]
-        responses = [response['text']
-                     for r in df['responses'] for response in r]
+        patterns = [pattern for p in df['patterns'] for pattern in p]
+        responses = [response for r in df['responses'] for response in r]
 
         # add intents
         for intent in intents:

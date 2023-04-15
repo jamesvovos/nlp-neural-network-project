@@ -4,6 +4,7 @@ import json
 import requests
 import torch
 from model import NeuralNet
+from processor import DataProcessor
 
 nlp = spacy.load('en_core_web_md')
 
@@ -11,20 +12,25 @@ nlp = spacy.load('en_core_web_md')
 
 
 class ChatBot(object):
-    def __init__(self, dp, data):
-        # NOTE: passing data processor object to perform tokenization/bag of words functions
-        self.dp = dp
+    def __init__(self, training_required: bool, npc_id: int):
+        self.npc_id = npc_id
+        self.file = "data.pth"
+        self.data = torch.load(self.file)
+        self.dp = DataProcessor(training_required)
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu")
-        self.response = requests.get("http://127.0.0.1:8000/intents/")
+        self.response = requests.get(
+            "http://127.0.0.1:8000/npcs/intents/" + str(npc_id))
         self.intents = json.loads(self.response.text)
-        self.bot_name = "James's AI"
-        self.input_size = data["input_size"]
-        self.hidden_size = data["hidden_size"]
-        self.output_size = data["output_size"]
-        self.tokenized_words = data["tokenized_words"]
-        self.tags = data["tags"]
-        self.model_state = data["model_state"]
+        self.input_size = self.data["input_size"]
+        self.hidden_size = self.data["hidden_size"]
+        self.output_size = self.data["output_size"]
+        self.tokenized_words = self.data["tokenized_words"]
+        self.tags = self.data["tags"]
+        self.model_state = self.data["model_state"]
+
+    def setup(self):
+        self.dp.initialise_data(self.npc_id)
 
     # function to get response from chatbot
     def get_response(self, msg):
@@ -54,6 +60,6 @@ class ChatBot(object):
         if prob.item() > 0.75:
             for intent in self.intents:
                 if tag == intent["tag"]:
-                    return random.choice(intent['responses'])['text']
+                    return random.choice(intent['responses'])
         else:
             return "I do not understand..."

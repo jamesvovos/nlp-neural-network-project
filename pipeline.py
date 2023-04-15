@@ -19,11 +19,11 @@ class CustomPipeline(object):
         for intent in self.dp.intents:
             tag = intent['tag']
             for pattern in intent['patterns']:
-                token = self.dp.tokenize(pattern['text'])
+                token = self.dp.tokenize(pattern)
                 self.dp.tokenized_words.extend(token)
                 # add named entity recognition (NER)
                 self.dp.ner_tags.append(
-                    {"label": tag.upper(), "pattern": pattern['text']})
+                    {"label": tag.upper(), "pattern": pattern})
                 # pattern : tag for XY training data
                 self.dp.xy.append((token, tag))
         # inject the custom component into the NLP pipeline
