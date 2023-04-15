@@ -2,6 +2,8 @@ import spacy
 from spacy import displacy
 import pandas as pd
 import numpy as np
+import requests
+import json
 from pipeline import CustomPipeline
 
 #nlp = spacy.load("en_core_web_sm")
@@ -75,17 +77,23 @@ class DataProcessor(object):
 
     # get JSON file training data and create the NLP pipeline
     def initialise_data(self):
-        # read in data from JSON file using pandas
-        df = pd.read_json("data/training-data.json")
+        response = requests.get("http://127.0.0.1:8000/intents/")
+        intents = json.loads(response.text)
+
+        # Convert list of dictionaries to JSON string
+        intents_json = json.dumps(intents)
+
+        # Read data from JSON string using pandas
+        df = pd.read_json(intents_json)
 
         # NOTE: useful to debug dataframe data
         # print(df)
 
         # data we want to extract
-        intents = df.intents.tolist()
-        tags = df['intents'].apply(lambda t: t['tag']).tolist()
-        patterns = df['intents'].apply(lambda p: p['patterns']).tolist()
-        responses = df['intents'].apply(lambda r: r['responses']).tolist()
+        tags = df['tag'].tolist()
+        patterns = [pattern['text'] for p in df['patterns'] for pattern in p]
+        responses = [response['text']
+                     for r in df['responses'] for response in r]
 
         # add intents
         for intent in intents:

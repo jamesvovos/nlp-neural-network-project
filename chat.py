@@ -1,6 +1,7 @@
 import spacy
 import random
 import json
+import requests
 import torch
 from model import NeuralNet
 
@@ -19,8 +20,8 @@ class ChatBot(object):
     def create_chat(self):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        with open("data/training-data.json", "r") as json_data:
-            intents = json.load(json_data)
+        response = requests.get("http://127.0.0.1:8000/intents/")
+        intents = json.loads(response.text)
 
         FILE = "data.pth"
         data = torch.load(FILE)
@@ -58,9 +59,9 @@ class ChatBot(object):
             probs = torch.softmax(output, dim=1)
             prob = probs[0][predicted.item()]
             if prob.item() > 0.75:
-                for intent in intents["intents"]:
+                for intent in intents:
                     if tag == intent["tag"]:
                         print(
-                            f"{self.bot_name}: {random.choice(intent['responses'])}")
+                            f"{self.bot_name}: {random.choice(intent['responses'])['text']}")
             else:
                 print(f"{self.bot_name}: I do not understand...")
